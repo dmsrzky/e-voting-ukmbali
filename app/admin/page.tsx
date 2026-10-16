@@ -9,6 +9,7 @@ import PaslonManager from "@/components/PaslonManager";
 import { ocrReasons, runOcr, terminateOcr } from "@/lib/ocr";
 import { PaslonMini } from "@/components/Paslon";
 import { BaliSkyline, Jepun } from "@/components/bali";
+import { consumeIdleFlag, markActiveNow, useIdleLogout, IDLE_TIMEOUT_MS } from "@/lib/idle";
 
 type Vote = {
   id: string;
@@ -57,11 +58,14 @@ function Login() {
   const [pw, setPw] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [idleNote, setIdleNote] = useState(false);
+  useEffect(() => setIdleNote(consumeIdleFlag()), []);
 
   async function go(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     setErr(null);
+    markActiveNow();
     const { error } = await sb.auth.signInWithPassword({ email, password: pw });
     if (error) setErr("Email atau password salah.");
     setBusy(false);
@@ -88,6 +92,11 @@ function Login() {
           <input className="field" type="email" placeholder="Email admin" value={email} onChange={(e) => setEmail(e.target.value)} required />
           <input className="field" type="password" placeholder="Password" value={pw} onChange={(e) => setPw(e.target.value)} required />
         </div>
+        {idleNote && !err && (
+          <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-800">
+            Kamu otomatis keluar karena tidak ada aktivitas selama {IDLE_TIMEOUT_MS / 60000} menit. Silakan masuk lagi.
+          </p>
+        )}
         {err && <p className="mt-3 text-sm text-red-700">{err}</p>}
         <button className="btn-primary mt-5 w-full" disabled={busy}>{busy ? "Masuk…" : "Masuk"}</button>
         </div>
@@ -123,6 +132,13 @@ function Dashboard({ email }: { email: string }) {
     loadPaslon();
   }, [loadPaslon]);
   const [ocrProg, setOcrProg] = useState<{ done: number; total: number } | null>(null);
+  const ocrRunning = useRef(false);
+  ocrRunning.current = ocrProg !== null;
+  const doSignOut = useCallback(async () => {
+    await sb.auth.signOut();
+  }, [sb]);
+  // auto-logout 10 menit tanpa aktivitas (tidak berlaku saat OCR massal sedang berjalan)
+  const idle = useIdleLogout(doSignOut, () => ocrRunning.current);
 
   const urlsRef = useRef<Record<string, string>>({});
   const loadedOnce = useRef(false);
@@ -529,6 +545,28 @@ function Dashboard({ email }: { email: string }) {
           onOcr={ocrOne}
           onDelete={removeVote}
         />
+      )}
+
+      {idle.secondsLeft !== null && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-ink/70 p-4 backdrop-blur-[2px]">
+          <div className="pop w-full max-w-sm overflow-hidden rounded-[28px] bg-white text-center shadow-2xl" role="alertdialog" aria-live="assertive">
+            <div className="poleng h-2" />
+            <div className="p-7">
+              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border-4 border-gold bg-gold-soft/50">
+                <span className="font-display text-3xl font-bold tabular-nums text-maroon">{idle.secondsLeft}</span>
+              </div>
+              <h3 className="mt-4 font-display text-xl font-bold">Masih di sana?</h3>
+              <p className="mt-1 text-sm text-ink/60">
+                Tidak ada aktivitas selama hampir {IDLE_TIMEOUT_MS / 60000} menit. Demi keamanan, kamu akan keluar otomatis dalam{" "}
+                <b className="tabular-nums">{idle.secondsLeft} detik</b>.
+              </p>
+              <div className="mt-6 grid grid-cols-2 gap-3">
+                <button className="btn-ghost" onClick={() => idle.logoutNow()}>Keluar sekarang</button>
+                <button className="btn-primary" onClick={idle.stay} autoFocus>Tetap masuk</button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </main>
   );
