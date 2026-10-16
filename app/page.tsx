@@ -138,7 +138,11 @@ export default function VotePage() {
               <div className="card mb-4 p-5 sm:p-6">
                 <StepTitle n={2} title="Pilih Pasangan Calon" sub="Ketuk salah satu kartu di bawah" />
               </div>
-              <div className="space-y-5" role="radiogroup" aria-label="Pasangan calon">
+              <div
+                className={list.length === 2 ? "grid gap-5 lg:-mx-48 lg:grid-cols-2" : "space-y-5"}
+                role="radiogroup"
+                aria-label="Pasangan calon"
+              >
                 {list.map((p) => (
                   <PaslonCard key={p.nomor} p={p} active={paslon === p.nomor} onSelect={() => setPaslon(p.nomor)} />
                 ))}

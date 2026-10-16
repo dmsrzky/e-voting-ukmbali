@@ -26,33 +26,8 @@ export type Paslon = {
 };
 
 export const PASLON: Paslon[] = [
-  {
-    nomor: 1,
-    ketua: "Nama Calon Ketua 1",
-    wakil: "Nama Calon Wakil 1",
-    fotoKetua: "",
-    fotoWakil: "",
-    tagline: "",
-    warna: "#A8232F", // merah
-  },
-  {
-    nomor: 2,
-    ketua: "Nama Calon Ketua 2",
-    wakil: "Nama Calon Wakil 2",
-    fotoKetua: "",
-    fotoWakil: "",
-    tagline: "",
-    warna: "#17624F", // hijau
-  },
-  {
-    nomor: 3,
-    ketua: "Nama Calon Ketua 3",
-    wakil: "Nama Calon Wakil 3",
-    fotoKetua: "",
-    fotoWakil: "",
-    tagline: "",
-    warna: "#24457F", // biru
-  },
+  { nomor: 1, ketua: "Nama Calon Ketua 1", wakil: "Nama Calon Wakil 1", fotoKetua: "", fotoWakil: "", tagline: "", warna: "#A8232F" },
+  { nomor: 2, ketua: "Nama Calon Ketua 2", wakil: "Nama Calon Wakil 2", fotoKetua: "", fotoWakil: "", tagline: "", warna: "#17624F" },
 ];
 
 export const getPaslon = (nomor: number) => PASLON.find((p) => p.nomor === nomor);
